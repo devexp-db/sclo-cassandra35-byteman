@@ -1,0 +1,73 @@
+diff -Naur byteman-1.5.2-full/build-release-pkgs.xml byteman-1.5.2-full-work/build-release-pkgs.xml
+--- byteman-1.5.2-full/build-release-pkgs.xml	2011-07-22 14:27:48.000000000 -0400
++++ byteman-1.5.2-full-work/build-release-pkgs.xml	2011-07-27 03:24:54.606871762 -0400
+@@ -81,7 +81,7 @@
+ -->
+     <!-- a working direrctory for the process. Can contain output from
+     previous releases if you like to keep them archived locally. -->
+-    <property name="workdir" location="/tmp/packaged_builds"/>
++    <property name="workdir" location="./workdir"/>
+     <!-- where to get the source -->
+     <property name="svnbase" value="https://svn.jboss.org/repos/byteman/tags"/>
+     <!-- The tag as it appears under svnbase -->
+@@ -199,8 +199,8 @@
+         <sequential>
+             <property name="groupid" value="org.jboss.byteman"/>
+ 
+-            <copy  file="${workdir}/${tag}/maven/pom-template.xml"
+-                   tofile="${workdir}/build/${tag}/pom-@{artifact}.xml"
++            <copy  file="maven/pom-template.xml"
++                   tofile="${workdir}/pom-@{artifact}.xml"
+                    filtering="true">
+                 <filterset>
+                     <filter token="groupid" value="${groupid}"/>
+@@ -209,7 +209,7 @@
+                     <filter token="packaging" value="@{packaging}"/>
+                 </filterset>
+             </copy>
+-
++<!--
+             <exec executable="mvn" dir="${workdir}">
+                 <arg value="deploy:deploy-file"/>
+                 <arg value="-Dfile=@{dir}/@{artifact}.@{packaging}"/>
+@@ -218,7 +218,7 @@
+                 <arg value="-DpomFile=${workdir}/build/${tag}/pom-@{artifact}.xml"/>
+                 <arg value="-DuniqueVersion=false"/>
+             </exec>
+-
++-->
+         </sequential>
+    </macrodef>
+ 
+@@ -227,7 +227,7 @@
+         <delete dir="${workdir}/build"/>
+         <mkdir dir="${workdir}/build"/>
+ 
+-        <mvn-artifact.src.macro artifact="byteman" dir="${workdir}/${tag}/install/lib/"/>
++       <!-- <mvn-artifact.src.macro artifact="byteman" dir="${workdir}/${tag}/install/lib/"/>-->
+         <mvn-artifact.macro artifact="byteman" dir="${workdir}/${tag}/install/lib/"/>
+         <mvn-artifact.macro artifact="byteman-submit" dir="${workdir}/${tag}/install/lib/"/>
+         <mvn-artifact.macro artifact="byteman-install" dir="${workdir}/${tag}/install/lib/"/>
+diff -Naur byteman-1.5.2-full/build.xml byteman-1.5.2-full-work/build.xml
+--- byteman-1.5.2-full/build.xml	2011-07-22 14:27:48.000000000 -0400
++++ byteman-1.5.2-full-work/build.xml	2011-07-27 03:21:58.574871685 -0400
+@@ -26,7 +26,7 @@
+     <property environment="env"/>
+ 
+     <!-- version string stamped inside the manifests -->
+-    <property name="version" value="1.5.1-SNAPSHOT"/>
++    <property name="version" value="1.5.2"/>
+ 
+     <property name="ext.asm.jars" value="asm-all-3.0.jar"/>
+ 
+@@ -150,8 +150,8 @@
+     <target name="byteman.jar.clear" unless="obfuscate.3rd.party">
+         <jarjar jarfile="${build.lib.dir}/${byteman.jar}" manifest="${manifest.file}">
+             <fileset dir="${build.classes.dir}" includes="**/*" excludes="**/install/*.class"/>
+-            <zipfileset src="${ext.lib.dir}/asm-all-3.0.jar"/>
+-            <zipfileset src="${ext.lib.dir}/javacuprt.jar"/>
++            <!--<zipfileset src="${ext.lib.dir}/asm-all-3.0.jar"/>
++            <zipfileset src="${ext.lib.dir}/javacuprt.jar"/>-->
+             <manifest>
+                 <attribute name="Implementation-Version" value="${version}"/>
+             </manifest>
