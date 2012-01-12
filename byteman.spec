@@ -1,6 +1,6 @@
 Name:             byteman
 Version:          1.5.2
-Release:          3%{?dist}
+Release:          4%{?dist}
 Summary:          Java agent-based bytecode injection tool
 Group:            Development/Libraries
 License:          LGPLv2+
@@ -100,6 +100,9 @@ cp -rp htdocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %doc docs/copyright.txt
 
 %changelog
+* Thu Jan 12 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.5.2-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Tue Sep 20 2011 Marek Goldmann <mgoldman@redhat.com> 1.5.2-3
 - Removed binary files from src.rpm
 
