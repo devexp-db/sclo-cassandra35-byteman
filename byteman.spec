@@ -1,32 +1,40 @@
 Name:             byteman
-Version:          1.5.2
-Release:          6%{?dist}
+Version:          2.0.4
+Release:          1%{?dist}
 Summary:          Java agent-based bytecode injection tool
 Group:            Development/Libraries
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
-# wget http://downloads.jboss.org/%{name}/%{version}/%{name}-%{version}-full-clean.zip
-# unzip -q %{name}-%{version}-full-clean.zip -d %{name}-%{version}-full
-# rm -rf %{name}-%{version}-full/ext/*
-# tar -zcvf %{name}-%{version}-full-clean.tar.gz %{name}-%{version}-full
-Source0:          %{name}-%{version}-full-clean.tar.gz
-Patch0:           %{name}-%{version}-buildxml.patch
+
+# git clone git://github.com/bytemanproject/byteman.git
+# cd byteman/ && git archive --format=tar --prefix=byteman-2.0.4/ 2.0.4 | xz > byteman-2.0.4.tar.xz
+Source0:          byteman-%{version}.tar.xz
 
 BuildArch:        noarch
 
 BuildRequires:    jpackage-utils
+BuildRequires:    javapackages-tools
 BuildRequires:    java-devel
-BuildRequires:    ant
+BuildRequires:    maven-local
+BuildRequires:    maven-shade-plugin
+BuildRequires:    maven-failsafe-plugin
+BuildRequires:    maven-jar-plugin
+BuildRequires:    maven-surefire-plugin
+BuildRequires:    maven-surefire-provider-testng
+BuildRequires:    maven-surefire-provider-junit4
+BuildRequires:    maven-verifier-plugin
 BuildRequires:    java_cup
 BuildRequires:    jarjar
 BuildRequires:    objectweb-asm
 BuildRequires:    junit4
 BuildRequires:    testng
 
-Requires:         java_cup
-Requires:         objectweb-asm
 Requires:         jpackage-utils
 Requires:         java
+
+# Bundling
+Provides:         bundled(java_cup) = 0.11a-12
+Provides:         bundled(objectweb-asm) = 3.3.1-5
 
 %description
 Byteman is a tool which simplifies tracing and testing of Java programs.
@@ -48,46 +56,48 @@ Requires:         jpackage-utils
 This package contains the API documentation for %{name}.
 
 %prep
-%setup -q -n %{name}-%{version}-full
-%patch0 -p1
+%setup -q
 
-find -name '*.class' -exec rm -f '{}' \;
-find -name '*.jar' -exec rm -f '{}' \;
+# Fix the gid:aid for java_cup
+sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
+sed -i "s|java-cup|java_cup|" agent/pom.xml
 
 %build
-OPT_JAR_LIST="jarjar junit4 testng objectweb-asm java_cup" ant install htdocs
-ant -f build-release-pkgs.xml init mvn-repository
+%mvn_build
 
 %install
-# JAR
 install -d -m 755 $RPM_BUILD_ROOT%{_javadir}/%{name}
-
-install -pm 644 build/lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}.jar
-install -pm 644 build/lib/%{name}-install.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-install.jar
-install -pm 644 build/lib/%{name}-submit.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-submit.jar
-install -pm 644 sample/build/lib/%{name}-sample.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-sample.jar
-install -pm 644 contrib/bmunit/build/lib/%{name}-bmunit.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-bmunit.jar
-install -pm 644 contrib/dtest/build/lib/%{name}-dtest.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-dtest.jar
-
 install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
 
-for m in bmunit dtest install sample submit; do
+for m in install sample submit; do
+  # JAR
+  install -pm 644 ${m}/target/%{name}-${m}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-${m}.jar
   # POM
-  install -pm 644 workdir/pom-%{name}-${m}.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}-${m}.pom
-
+  install -pm 644 ${m}/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}-${m}.pom
   # DEPMAP
   %add_maven_depmap JPP.%{name}-%{name}-${m}.pom %{name}/%{name}-${m}.jar
 done
 
-# POM
-install -pm 644 workdir/pom-%{name}.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}.pom
+# Contrib
+for m in bmunit dtest; do
+  # JAR
+  install -pm 644 contrib/${m}/target/%{name}-${m}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-${m}.jar
+  # POM
+  install -pm 644 contrib/${m}/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}-${m}.pom
+  # DEPMAP
+  %add_maven_depmap JPP.%{name}-%{name}-${m}.pom %{name}/%{name}-${m}.jar
+done
 
+# JAR
+install -pm 644 agent/target/%{name}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}.jar
+# POM
+install -pm 644 agent/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}.pom
 # DEPMAP
 %add_maven_depmap JPP.%{name}-%{name}.pom %{name}/%{name}.jar
 
 # APIDOCS
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -rp htdocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+cp -rp target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
 %files
 %{_mavenpomdir}/*
@@ -100,6 +110,11 @@ cp -rp htdocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %doc docs/copyright.txt
 
 %changelog
+* Thu Feb 21 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-1
+- Upstream release 2.0.4
+- Switched to Maven
+- Bundling java_cup and objectweb-asm (fpc#226)
+
 * Wed Feb 13 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.5.2-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
