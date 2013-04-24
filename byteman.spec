@@ -1,6 +1,9 @@
+%global homedir %{_datadir}/%{name}
+%global bindir %{homedir}/bin
+
 Name:             byteman
 Version:          2.0.4
-Release:          1%{?dist}
+Release:          2%{?dist}
 Summary:          Java agent-based bytecode injection tool
 Group:            Development/Libraries
 License:          LGPLv2+
@@ -33,8 +36,10 @@ Requires:         jpackage-utils
 Requires:         java
 
 # Bundling
-Provides:         bundled(java_cup) = 0.11a-12
-Provides:         bundled(objectweb-asm) = 3.3.1-5
+#BuildRequires:    java_cup = 1:0.11a-12
+#BuildRequires:    objectweb-asm = 0:3.3.1-7
+Provides:         bundled(java_cup) = 1:0.11a-12
+Provides:         bundled(objectweb-asm) = 0:3.3.1-7
 
 %description
 Byteman is a tool which simplifies tracing and testing of Java programs.
@@ -66,8 +71,30 @@ sed -i "s|java-cup|java_cup|" agent/pom.xml
 %mvn_build
 
 %install
+install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
 install -d -m 755 $RPM_BUILD_ROOT%{_javadir}/%{name}
 install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
+
+install -d -m 755 $RPM_BUILD_ROOT%{homedir}
+install -d -m 755 $RPM_BUILD_ROOT%{homedir}/lib
+install -d -m 755 $RPM_BUILD_ROOT%{bindir}
+
+install -m 755 bin/bmsubmit.sh $RPM_BUILD_ROOT%{bindir}/bmsubmit
+install -m 755 bin/bminstall.sh  $RPM_BUILD_ROOT%{bindir}/bminstall
+install -m 755 bin/bmjava.sh  $RPM_BUILD_ROOT%{bindir}/bmjava
+install -m 755 bin/bmcheck.sh  $RPM_BUILD_ROOT%{bindir}/bmcheck
+
+for f in bmsubmit bmjava bminstall bmcheck; do
+cat > $RPM_BUILD_ROOT%{_bindir}/${f} << EOF
+#!/bin/sh
+
+export BYTEMAN_HOME=/usr/share/byteman
+
+\$BYTEMAN_HOME/bin/${f}
+EOF
+done
+
+chmod 755 $RPM_BUILD_ROOT%{_bindir}/*
 
 for m in install sample submit; do
   # JAR
@@ -99,9 +126,19 @@ install -pm 644 agent/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 cp -rp target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
+for m in bmunit dtest install sample submit; do
+  ln -s %{_javadir}/byteman/byteman-${m}.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman-${m}.jar
+done
+
+ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
+
 %files
 %{_mavenpomdir}/*
 %{_mavendepmapfragdir}/*
+%{bindir}/*
+%{homedir}/*
+%{homedir}/lib/*
+%{_bindir}/*
 %{_javadir}/*
 %doc README docs/ProgrammersGuide.pdf docs/copyright.txt
 
@@ -110,6 +147,9 @@ cp -rp target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %doc docs/copyright.txt
 
 %changelog
+* Wed Apr 24 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-2
+- Added bmsubmit, bminstall and bmjava scripts, RHBZ#951560
+
 * Thu Feb 21 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-1
 - Upstream release 2.0.4
 - Switched to Maven
