@@ -3,7 +3,7 @@
 
 Name:             byteman
 Version:          2.0.4
-Release:          2%{?dist}
+Release:          3%{?dist}
 Summary:          Java agent-based bytecode injection tool
 Group:            Development/Libraries
 License:          LGPLv2+
@@ -33,7 +33,7 @@ BuildRequires:    junit4
 BuildRequires:    testng
 
 Requires:         jpackage-utils
-Requires:         java
+Requires:         java-devel
 
 # Bundling
 #BuildRequires:    java_cup = 1:0.11a-12
@@ -89,8 +89,9 @@ cat > $RPM_BUILD_ROOT%{_bindir}/${f} << EOF
 #!/bin/sh
 
 export BYTEMAN_HOME=/usr/share/byteman
+export JAVA_HOME=/usr/lib/jvm/java
 
-\$BYTEMAN_HOME/bin/${f}
+\$BYTEMAN_HOME/bin/${f} \$*
 EOF
 done
 
@@ -135,9 +136,7 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %files
 %{_mavenpomdir}/*
 %{_mavendepmapfragdir}/*
-%{bindir}/*
 %{homedir}/*
-%{homedir}/lib/*
 %{_bindir}/*
 %{_javadir}/*
 %doc README docs/ProgrammersGuide.pdf docs/copyright.txt
@@ -147,6 +146,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Thu Apr 25 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-3
+- Fixes to the launch scripts
+
 * Wed Apr 24 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-2
 - Added bmsubmit, bminstall and bmjava scripts, RHBZ#951560
 
