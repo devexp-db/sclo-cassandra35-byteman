@@ -3,7 +3,7 @@
 
 Name:             byteman
 Version:          2.0.4
-Release:          3%{?dist}
+Release:          4%{?dist}
 Summary:          Java agent-based bytecode injection tool
 Group:            Development/Libraries
 License:          LGPLv2+
@@ -71,9 +71,9 @@ sed -i "s|java-cup|java_cup|" agent/pom.xml
 %mvn_build
 
 %install
+%mvn_install
+
 install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}/%{name}
-install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
 
 install -d -m 755 $RPM_BUILD_ROOT%{homedir}
 install -d -m 755 $RPM_BUILD_ROOT%{homedir}/lib
@@ -97,55 +97,25 @@ done
 
 chmod 755 $RPM_BUILD_ROOT%{_bindir}/*
 
-for m in install sample submit; do
-  # JAR
-  install -pm 644 ${m}/target/%{name}-${m}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-${m}.jar
-  # POM
-  install -pm 644 ${m}/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}-${m}.pom
-  # DEPMAP
-  %add_maven_depmap JPP.%{name}-%{name}-${m}.pom %{name}/%{name}-${m}.jar
-done
-
-# Contrib
-for m in bmunit dtest; do
-  # JAR
-  install -pm 644 contrib/${m}/target/%{name}-${m}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}-${m}.jar
-  # POM
-  install -pm 644 contrib/${m}/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}-${m}.pom
-  # DEPMAP
-  %add_maven_depmap JPP.%{name}-%{name}-${m}.pom %{name}/%{name}-${m}.jar
-done
-
-# JAR
-install -pm 644 agent/target/%{name}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}/%{name}.jar
-# POM
-install -pm 644 agent/pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}-%{name}.pom
-# DEPMAP
-%add_maven_depmap JPP.%{name}-%{name}.pom %{name}/%{name}.jar
-
-# APIDOCS
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -rp target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-
 for m in bmunit dtest install sample submit; do
   ln -s %{_javadir}/byteman/byteman-${m}.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman-${m}.jar
 done
 
 ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 
-%files
-%{_mavenpomdir}/*
-%{_mavendepmapfragdir}/*
+%files -f .mfiles
+%dir %{_javadir}/%{name}
 %{homedir}/*
 %{_bindir}/*
-%{_javadir}/*
 %doc README docs/ProgrammersGuide.pdf docs/copyright.txt
 
-%files javadoc
-%{_javadocdir}/%{name}
+%files javadoc -f .mfiles-javadoc
 %doc docs/copyright.txt
 
 %changelog
+* Wed May 29 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-4
+- New guidelines
+
 * Thu Apr 25 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-3
 - Fixes to the launch scripts
 
