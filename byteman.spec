@@ -3,7 +3,7 @@
 
 Name:             byteman
 Version:          2.0.4
-Release:          4%{?dist}
+Release:          5%{?dist}
 Summary:          Java agent-based bytecode injection tool
 Group:            Development/Libraries
 License:          LGPLv2+
@@ -67,6 +67,11 @@ This package contains the API documentation for %{name}.
 sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
 sed -i "s|java-cup|java_cup|" agent/pom.xml
 
+# Remove tools.jar from dependencyManagement (Fedora-specific patch).
+# In Fedora tools.jar doesn't need to use system scope or provide
+# systemPath - Maven will find it anyways.
+%pom_remove_dep com.sun:tools
+
 %build
 %mvn_build
 
@@ -113,6 +118,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Wed Jun  5 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 2.0.4-5
+- Remove tools.jar from dependencyManagement
+
 * Wed May 29 2013 Marek Goldmann <mgoldman@redhat.com> - 2.0.4-4
 - New guidelines
 
