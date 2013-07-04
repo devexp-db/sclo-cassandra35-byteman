@@ -2,16 +2,12 @@
 %global bindir %{homedir}/bin
 
 Name:             byteman
-Version:          2.0.4
-Release:          5%{?dist}
+Version:          2.1.2
+Release:          1%{?dist}
 Summary:          Java agent-based bytecode injection tool
-Group:            Development/Libraries
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
-
-# git clone git://github.com/bytemanproject/byteman.git
-# cd byteman/ && git archive --format=tar --prefix=byteman-2.0.4/ 2.0.4 | xz > byteman-2.0.4.tar.xz
-Source0:          byteman-%{version}.tar.xz
+Source0:          https://github.com/bytemanproject/byteman/archive/%{version}.tar.gz
 
 BuildArch:        noarch
 
@@ -54,8 +50,6 @@ code and reinstall different code while the application continues to execute.
 
 %package javadoc
 Summary:          Javadocs for %{name}
-Group:            Documentation
-Requires:         jpackage-utils
 
 %description javadoc
 This package contains the API documentation for %{name}.
@@ -118,6 +112,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Thu Jul 04 2013 Marek Goldmann <mgoldman@redhat.com> - 2.1.2-1
+- Upstream release 2.1.2
+
 * Wed Jun  5 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 2.0.4-5
 - Remove tools.jar from dependencyManagement
 
