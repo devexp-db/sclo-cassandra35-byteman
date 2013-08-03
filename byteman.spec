@@ -3,7 +3,7 @@
 
 Name:             byteman
 Version:          2.1.2
-Release:          1%{?dist}
+Release:          2%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
@@ -112,6 +112,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
 * Thu Jul 04 2013 Marek Goldmann <mgoldman@redhat.com> - 2.1.2-1
 - Upstream release 2.1.2
 
