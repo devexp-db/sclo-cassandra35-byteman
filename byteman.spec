@@ -1,13 +1,14 @@
 %global homedir %{_datadir}/%{name}
 %global bindir %{homedir}/bin
+%global hash 373601b4e608ea622b2fec947824b99cd0edb124
 
 Name:             byteman
-Version:          2.1.2
-Release:          2%{?dist}
+Version:          2.1.4.1
+Release:          1%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
-Source0:          https://github.com/bytemanproject/byteman/archive/%{version}.tar.gz
+Source0:          https://github.com/bytemanproject/byteman/archive/%{hash}.tar.gz
 
 BuildArch:        noarch
 
@@ -34,8 +35,13 @@ Requires:         java-devel
 # Bundling
 #BuildRequires:    java_cup = 1:0.11a-12
 #BuildRequires:    objectweb-asm = 0:3.3.1-7
-Provides:         bundled(java_cup) = 1:0.11a-12
-Provides:         bundled(objectweb-asm) = 0:3.3.1-7
+Provides:         bundled(java_cup) = 1:0.11a-15
+
+%if 0%{?fedora} > 20
+Provides:         bundled(objectweb-asm) = 0:5.0-0.2.beta
+%else
+Provides:         bundled(objectweb-asm) = 0:3.3.1-8
+%endif
 
 %description
 Byteman is a tool which simplifies tracing and testing of Java programs.
@@ -55,7 +61,7 @@ Summary:          Javadocs for %{name}
 This package contains the API documentation for %{name}.
 
 %prep
-%setup -q
+%setup -q -n byteman-%{hash}
 
 # Fix the gid:aid for java_cup
 sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
@@ -112,6 +118,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Fri Feb 14 2014 Marek Goldmann <mgoldman@redhat.com> - 2.1.4.1-1
+- Upstream release 2.1.4.1
+
 * Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.2-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
