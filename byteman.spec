@@ -4,7 +4,7 @@
 
 Name:             byteman
 Version:          2.1.4.1
-Release:          1%{?dist}
+Release:          2%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
@@ -118,6 +118,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Fri Mar 28 2014 Michael Simacek <msimacek@redhat.com> - 2.1.4.1-2
+- Use Requires: java-headless rebuild (#1067528)
+
 * Fri Feb 14 2014 Marek Goldmann <mgoldman@redhat.com> - 2.1.4.1-1
 - Upstream release 2.1.4.1
 
