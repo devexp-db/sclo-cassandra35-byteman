@@ -4,7 +4,7 @@
 
 Name:             byteman
 Version:          2.1.4.1
-Release:          4%{?dist}
+Release:          5%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
@@ -21,12 +21,12 @@ BuildRequires:    maven-failsafe-plugin
 BuildRequires:    maven-jar-plugin
 BuildRequires:    maven-surefire-plugin
 BuildRequires:    maven-surefire-provider-testng
-BuildRequires:    maven-surefire-provider-junit4
+BuildRequires:    maven-surefire-provider-junit
 BuildRequires:    maven-verifier-plugin
 BuildRequires:    java_cup
 BuildRequires:    jarjar
-BuildRequires:    objectweb-asm
-BuildRequires:    junit4
+BuildRequires:    objectweb-asm3
+BuildRequires:    junit
 BuildRequires:    testng
 
 Requires:         jpackage-utils
@@ -67,6 +67,9 @@ This package contains the API documentation for %{name}.
 # Fix the gid:aid for java_cup
 sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
 sed -i "s|java-cup|java_cup|" agent/pom.xml
+
+# org.jboss.byteman:byteman-download requires "-sources" and "-javadoc" artifacts
+%mvn_package ':::{sources,javadoc}:' __default
 
 # Remove tools.jar from dependencyManagement (Fedora-specific patch).
 # In Fedora tools.jar doesn't need to use system scope or provide
@@ -119,6 +122,10 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %doc docs/copyright.txt
 
 %changelog
+* Fri Feb 27 2015 Michal Srb <msrb@redhat.com> - 2.1.4.1-5
+- Fix FTBFS
+- Rebuild to generate new metadata
+
 * Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.4.1-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
