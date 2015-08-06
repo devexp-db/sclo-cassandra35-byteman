@@ -4,7 +4,7 @@
 
 Name:             byteman
 Version:          2.1.4.1
-Release:          6%{?dist}
+Release:          7%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
@@ -12,9 +12,6 @@ Source0:          https://github.com/bytemanproject/byteman/archive/%{hash}.tar.
 
 BuildArch:        noarch
 
-BuildRequires:    jpackage-utils
-BuildRequires:    javapackages-tools
-BuildRequires:    java-devel
 BuildRequires:    maven-local
 BuildRequires:    maven-shade-plugin
 BuildRequires:    maven-failsafe-plugin
@@ -28,9 +25,6 @@ BuildRequires:    jarjar
 BuildRequires:    objectweb-asm3
 BuildRequires:    junit
 BuildRequires:    testng
-
-Requires:         jpackage-utils
-Requires:         java-devel
 
 # Bundling
 #BuildRequires:    java_cup = 1:0.11a-12
@@ -56,13 +50,15 @@ repackage or redeploy your application. In fact you can remove injected
 code and reinstall different code while the application continues to execute.
 
 %package javadoc
-Summary:          Javadocs for %{name}
+Summary:          Javadoc for %{name}
 
 %description javadoc
 This package contains the API documentation for %{name}.
 
 %prep
 %setup -q -n byteman-%{hash}
+# Fix doclint problem
+%pom_xpath_inject  "pom:plugin[pom:artifactId = 'maven-javadoc-plugin']/pom:configuration" "<additionalparam>-Xdoclint:none</additionalparam>"
 
 # Fix the gid:aid for java_cup
 sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
@@ -113,15 +109,20 @@ done
 ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 
 %files -f .mfiles
-%dir %{_javadir}/%{name}
 %{homedir}/*
 %{_bindir}/*
-%doc README docs/ProgrammersGuide.pdf docs/copyright.txt
+%doc README docs/ProgrammersGuide.pdf
+%license docs/copyright.txt
 
 %files javadoc -f .mfiles-javadoc
-%doc docs/copyright.txt
+%license docs/copyright.txt
 
 %changelog
+* Thu Aug 06 2015 gil cattaneo <puntogil@libero.it> 2.1.4.1-7
+- Fix FTBFS rhbz#1239392
+- Remove duplicate files
+- Introduce license macro
+
 * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.4.1-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
