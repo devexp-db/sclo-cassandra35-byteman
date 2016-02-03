@@ -4,7 +4,7 @@
 
 Name:             byteman
 Version:          2.1.4.1
-Release:          7%{?dist}
+Release:          8%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
@@ -118,6 +118,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %license docs/copyright.txt
 
 %changelog
+* Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 2.1.4.1-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
 * Thu Aug 06 2015 gil cattaneo <puntogil@libero.it> 2.1.4.1-7
 - Fix FTBFS rhbz#1239392
 - Remove duplicate files
