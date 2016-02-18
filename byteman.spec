@@ -1,14 +1,14 @@
 %global homedir %{_datadir}/%{name}
 %global bindir %{homedir}/bin
-%global hash 373601b4e608ea622b2fec947824b99cd0edb124
 
 Name:             byteman
-Version:          2.1.4.1
-Release:          8%{?dist}
+Version:          3.0.4
+Release:          1%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
-Source0:          https://github.com/bytemanproject/byteman/archive/%{hash}.tar.gz
+# wget -O 3.0.4.tar.gz https://github.com/bytemanproject/byteman/archive/3.0.4.tar.gz
+Source0:          https://github.com/bytemanproject/byteman/archive/%{version}.tar.gz
 
 BuildArch:        noarch
 
@@ -20,23 +20,17 @@ BuildRequires:    maven-surefire-plugin
 BuildRequires:    maven-surefire-provider-testng
 BuildRequires:    maven-surefire-provider-junit
 BuildRequires:    maven-verifier-plugin
+BuildRequires:    maven-dependency-plugin
 BuildRequires:    java_cup
 BuildRequires:    jarjar
-BuildRequires:    objectweb-asm3
+BuildRequires:    objectweb-asm
 BuildRequires:    junit
 BuildRequires:    testng
+# JBoss modules byteman plugin requires it
+BuildRequires:    mvn(org.jboss.modules:jboss-modules)
 
-# Bundling
-#BuildRequires:    java_cup = 1:0.11a-12
-#BuildRequires:    objectweb-asm = 0:3.3.1-7
-
-%if 0%{?fedora} > 20
-Provides:         bundled(objectweb-asm) = 0:5.0.1-1
-Provides:         bundled(java_cup) = 1:0.11a-16
-%else
-Provides:         bundled(objectweb-asm) = 0:3.3.1-8
-Provides:         bundled(java_cup) = 1:0.11a-15
-%endif
+Provides:         bundled(objectweb-asm) = 0:5.0.4-2
+Provides:         bundled(java_cup) = 1:0.11b-3
 
 %description
 Byteman is a tool which simplifies tracing and testing of Java programs.
@@ -56,7 +50,7 @@ Summary:          Javadoc for %{name}
 This package contains the API documentation for %{name}.
 
 %prep
-%setup -q -n byteman-%{hash}
+%setup -q -n byteman-%{version}
 # Fix doclint problem
 %pom_xpath_inject  "pom:plugin[pom:artifactId = 'maven-javadoc-plugin']/pom:configuration" "<additionalparam>-Xdoclint:none</additionalparam>"
 
@@ -64,16 +58,18 @@ This package contains the API documentation for %{name}.
 sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
 sed -i "s|java-cup|java_cup|" agent/pom.xml
 
-# org.jboss.byteman:byteman-download requires "-sources" and "-javadoc" artifacts
-%mvn_package ':::{sources,javadoc}:' __default
+# Remove scope=system and systemPath for com.sun:tools
+%pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:scope" install
+%pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:systemPath" install
+%pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:scope" contrib/bmunit
+%pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:systemPath" contrib/bmunit
 
-# Remove tools.jar from dependencyManagement (Fedora-specific patch).
-# In Fedora tools.jar doesn't need to use system scope or provide
-# systemPath - Maven will find it anyways.
-%pom_remove_dep com.sun:tools
+# Don't ship download module
+%pom_disable_module download
 
 %build
-%mvn_build
+# Tests fail on ARM. Bad!
+%mvn_build -f
 
 %install
 %mvn_install
@@ -118,6 +114,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %license docs/copyright.txt
 
 %changelog
+* Thu Feb 18 2016 Severin Gehwolf <sgehwolf@redhat.com> - 3.0.4-1
+- Update to latest upstream 3.0.4 release.
+
 * Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 2.1.4.1-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
