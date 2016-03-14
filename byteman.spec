@@ -1,9 +1,12 @@
+%global javacup_or_asm java_cup:java_cup|org.ow2.asm:asm-all
+%global __requires_exclude ^.*mvn\\(%{javacup_or_asm}\\)$
+
 %global homedir %{_datadir}/%{name}
 %global bindir %{homedir}/bin
 
 Name:             byteman
 Version:          3.0.4
-Release:          1%{?dist}
+Release:          2%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
@@ -49,6 +52,12 @@ Summary:          Javadoc for %{name}
 %description javadoc
 This package contains the API documentation for %{name}.
 
+%package rulecheck-maven-plugin
+Summary:          Maven plugin for checking Byteman rules.
+
+%description rulecheck-maven-plugin
+This package contains the Byteman rule check maven plugin.
+
 %prep
 %setup -q -n byteman-%{version}
 # Fix doclint problem
@@ -67,9 +76,15 @@ sed -i "s|java-cup|java_cup|" agent/pom.xml
 # Don't ship download module
 %pom_disable_module download
 
+# Some tests fail intermittently during builds. Disable them.
+%pom_disable_module tests contrib/jboss-modules-system
+%pom_xpath_remove "pom:build/pom:plugins/pom:plugin[pom:artifactId='maven-surefire-plugin']/pom:executions" contrib/bmunit
+%pom_xpath_set "pom:build/pom:plugins/pom:plugin[pom:artifactId='maven-surefire-plugin']/pom:configuration" '<skip>true</skip>' contrib/bmunit
+
+%mvn_package ":byteman-rulecheck-maven-plugin" rulecheck-maven-plugin
+
 %build
-# Tests fail on ARM. Bad!
-%mvn_build -f
+%mvn_build
 
 %install
 %mvn_install
@@ -113,7 +128,15 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %files javadoc -f .mfiles-javadoc
 %license docs/copyright.txt
 
+%files rulecheck-maven-plugin -f .mfiles-rulecheck-maven-plugin
+%license docs/copyright.txt
+
 %changelog
+* Mon Mar 14 2016 Severin Gehwolf <sgehwolf@redhat.com> - 3.0.4-2
+- Enable some tests during build
+- Fix generated requires by filtering requires for bundled libs.
+- Split maven plugin into separate package.
+
 * Thu Feb 18 2016 Severin Gehwolf <sgehwolf@redhat.com> - 3.0.4-1
 - Update to latest upstream 3.0.4 release.
 
