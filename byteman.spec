@@ -5,12 +5,12 @@
 %global bindir %{homedir}/bin
 
 Name:             byteman
-Version:          3.0.4
-Release:          2%{?dist}
+Version:          3.0.6
+Release:          1%{?dist}
 Summary:          Java agent-based bytecode injection tool
 License:          LGPLv2+
 URL:              http://www.jboss.org/byteman
-# wget -O 3.0.4.tar.gz https://github.com/bytemanproject/byteman/archive/3.0.4.tar.gz
+# wget -O 3.0.6.tar.gz https://github.com/bytemanproject/byteman/archive/3.0.6.tar.gz
 Source0:          https://github.com/bytemanproject/byteman/archive/%{version}.tar.gz
 
 BuildArch:        noarch
@@ -73,14 +73,16 @@ sed -i "s|java-cup|java_cup|" agent/pom.xml
 %pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:scope" contrib/bmunit
 %pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:systemPath" contrib/bmunit
 
-# Don't ship download module
-%pom_disable_module download
-
 # Some tests fail intermittently during builds. Disable them.
 %pom_disable_module tests contrib/jboss-modules-system
 %pom_xpath_remove "pom:build/pom:plugins/pom:plugin[pom:artifactId='maven-surefire-plugin']/pom:executions" contrib/bmunit
 %pom_xpath_set "pom:build/pom:plugins/pom:plugin[pom:artifactId='maven-surefire-plugin']/pom:configuration" '<skip>true</skip>' contrib/bmunit
 
+# Don't build download, docs modules
+%pom_disable_module download
+%pom_disable_module docs
+
+# Put maven plugin into a separate package
 %mvn_package ":byteman-rulecheck-maven-plugin" rulecheck-maven-plugin
 
 %build
@@ -132,6 +134,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %license docs/copyright.txt
 
 %changelog
+* Mon Jun 13 2016 Severin Gehwolf <sgehwolf@redhat.com> - 3.0.6-1
+- Update to latest upstream release.
+
 * Mon Mar 14 2016 Severin Gehwolf <sgehwolf@redhat.com> - 3.0.4-2
 - Enable some tests during build
 - Fix generated requires by filtering requires for bundled libs.
