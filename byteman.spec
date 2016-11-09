@@ -1,39 +1,46 @@
+%{?scl:%scl_package byteman}
+%{!?scl:%global pkg_name %{name}}
+
 %global javacup_or_asm java_cup:java_cup|org.ow2.asm:asm-all
 %global __requires_exclude ^.*mvn\\(%{javacup_or_asm}\\)$
 
-%global homedir %{_datadir}/%{name}
+%global homedir %{_datadir}/%{pkg_name}
 %global bindir %{homedir}/bin
 
-Name:             byteman
-Version:          3.0.6
-Release:          1%{?dist}
-Summary:          Java agent-based bytecode injection tool
-License:          LGPLv2+
-URL:              http://www.jboss.org/byteman
+Name:		%{?scl_prefix}byteman
+Version:	3.0.6
+Release:	2%{?dist}
+Summary:	Java agent-based bytecode injection tool
+License:	LGPLv2+
+URL:		http://www.jboss.org/byteman
 # wget -O 3.0.6.tar.gz https://github.com/bytemanproject/byteman/archive/3.0.6.tar.gz
-Source0:          https://github.com/bytemanproject/byteman/archive/%{version}.tar.gz
+Source0:	https://github.com/%{pkg_name}project/%{pkg_name}/archive/%{version}.tar.gz
 
-BuildArch:        noarch
+BuildArch:	noarch
 
-BuildRequires:    maven-local
-BuildRequires:    maven-shade-plugin
-BuildRequires:    maven-failsafe-plugin
-BuildRequires:    maven-jar-plugin
-BuildRequires:    maven-surefire-plugin
-BuildRequires:    maven-surefire-provider-testng
-BuildRequires:    maven-surefire-provider-junit
-BuildRequires:    maven-verifier-plugin
-BuildRequires:    maven-dependency-plugin
-BuildRequires:    java_cup
-BuildRequires:    jarjar
-BuildRequires:    objectweb-asm
-BuildRequires:    junit
-BuildRequires:    testng
+BuildRequires:	%{?scl_prefix_maven}maven-local
+BuildRequires:	%{?scl_prefix_maven}maven-shade-plugin
+BuildRequires:	%{?scl_prefix_maven}maven-failsafe-plugin
+BuildRequires:	%{?scl_prefix_maven}maven-jar-plugin
+BuildRequires:	%{?scl_prefix_maven}maven-surefire-plugin
+BuildRequires:	%{?scl_prefix_maven}maven-surefire-provider-testng
+BuildRequires:	%{?scl_prefix_maven}maven-surefire-provider-junit
+BuildRequires:	%{?scl_prefix_maven}maven-dependency-plugin
+BuildRequires:	%{?scl_prefix_maven}maven-plugin-bundle
+BuildRequires:	%{?scl_prefix_maven}maven-source-plugin
+BuildRequires:	%{?scl_prefix_maven}maven-plugin-plugin
+BuildRequires:	%{?scl_prefix_maven}testng
+BuildRequires:	%{?scl_prefix_java_common}java_cup
+BuildRequires:	%{?scl_prefix_java_common}junit
+BuildRequires:	%{?scl_prefix}objectweb-asm
+# missing dependencies in RHEL not needed in SCL package
+%{!?scl:BuildRequires:	maven-verifier-plugin
 # JBoss modules byteman plugin requires it
-BuildRequires:    mvn(org.jboss.modules:jboss-modules)
+BuildRequires:	mvn(org.jboss.modules:jboss-modules)}
+%{?scl:Requires: %scl_runtime}
 
-Provides:         bundled(objectweb-asm) = 0:5.0.4-2
-Provides:         bundled(java_cup) = 1:0.11b-3
+Provides:       bundled(objectweb-asm) = 0:5.0.4-2
+Provides:       bundled(java_cup) = 1:0.11b-3
 
 %description
 Byteman is a tool which simplifies tracing and testing of Java programs.
@@ -47,26 +54,25 @@ repackage or redeploy your application. In fact you can remove injected
 code and reinstall different code while the application continues to execute.
 
 %package javadoc
-Summary:          Javadoc for %{name}
+Summary:	Javadoc for %{name}
 
 %description javadoc
 This package contains the API documentation for %{name}.
 
 %package rulecheck-maven-plugin
-Summary:          Maven plugin for checking Byteman rules.
+Summary:        Maven plugin for checking Byteman rules.
 
 %description rulecheck-maven-plugin
 This package contains the Byteman rule check maven plugin.
 
 %prep
-%setup -q -n byteman-%{version}
-# Fix doclint problem
-%pom_xpath_inject  "pom:plugin[pom:artifactId = 'maven-javadoc-plugin']/pom:configuration" "<additionalparam>-Xdoclint:none</additionalparam>"
+%setup -q -n %{pkg_name}-%{version}
 
 # Fix the gid:aid for java_cup
 sed -i "s|net.sf.squirrel-sql.thirdparty-non-maven|java_cup|" agent/pom.xml
 sed -i "s|java-cup|java_cup|" agent/pom.xml
 
+%{?scl:scl enable %{scl_maven} %{scl} - << "EOF"}
 # Remove scope=system and systemPath for com.sun:tools
 %pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:scope" install
 %pom_xpath_remove "pom:profiles/pom:profile/pom:dependencies/pom:dependency[pom:artifactId='tools']/pom:systemPath" install
@@ -82,28 +88,39 @@ sed -i "s|java-cup|java_cup|" agent/pom.xml
 %pom_disable_module download
 %pom_disable_module docs
 
+# disable jboss-modules-plugin module in SCL package due to missing dependency
+%{?scl:%pom_disable_module contrib/jboss-modules-system}
+
+# disable maven-verifier-pugin for SCL package due to missing dependency
+%{?scl:%pom_remove_plugin -r :maven-verifier-plugin}
+
 # Put maven plugin into a separate package
-%mvn_package ":byteman-rulecheck-maven-plugin" rulecheck-maven-plugin
+%mvn_package ":%{pkg_name}-rulecheck-maven-plugin" rulecheck-maven-plugin
+%{?scl:EOF}
 
 %build
+%{?scl:scl enable %{scl_maven} %{scl} - << "EOF"}
 %mvn_build
+%{?scl:EOF}
 
 %install
+%{?scl:scl enable %{scl_maven} %{scl} - << "EOF"}
 %mvn_install
+%{?scl:EOF}
 
-install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
+install -d -m 755 %{buildroot}%{_bindir}
 
-install -d -m 755 $RPM_BUILD_ROOT%{homedir}
-install -d -m 755 $RPM_BUILD_ROOT%{homedir}/lib
-install -d -m 755 $RPM_BUILD_ROOT%{bindir}
+install -d -m 755 %{buildroot}%{homedir}
+install -d -m 755 %{buildroot}%{homedir}/lib
+install -d -m 755 %{buildroot}%{bindir}
 
-install -m 755 bin/bmsubmit.sh $RPM_BUILD_ROOT%{bindir}/bmsubmit
-install -m 755 bin/bminstall.sh  $RPM_BUILD_ROOT%{bindir}/bminstall
-install -m 755 bin/bmjava.sh  $RPM_BUILD_ROOT%{bindir}/bmjava
-install -m 755 bin/bmcheck.sh  $RPM_BUILD_ROOT%{bindir}/bmcheck
+install -m 755 bin/bmsubmit.sh %{buildroot}%{bindir}/bmsubmit
+install -m 755 bin/bminstall.sh  %{buildroot}%{bindir}/bminstall
+install -m 755 bin/bmjava.sh  %{buildroot}%{bindir}/bmjava
+install -m 755 bin/bmcheck.sh  %{buildroot}%{bindir}/bmcheck
 
 for f in bmsubmit bmjava bminstall bmcheck; do
-cat > $RPM_BUILD_ROOT%{_bindir}/${f} << EOF
+cat > %{buildroot}%{_bindir}/${f} << EOF
 #!/bin/sh
 
 export BYTEMAN_HOME=/usr/share/byteman
@@ -113,13 +130,13 @@ export JAVA_HOME=/usr/lib/jvm/java
 EOF
 done
 
-chmod 755 $RPM_BUILD_ROOT%{_bindir}/*
+chmod 755 %{buildroot}%{_bindir}/*
 
 for m in bmunit dtest install sample submit; do
-  ln -s %{_javadir}/byteman/byteman-${m}.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman-${m}.jar
+  ln -s %{_javadir}/byteman/byteman-${m}.jar %{buildroot}%{homedir}/lib/byteman-${m}.jar
 done
 
-ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
+ln -s %{_javadir}/byteman/byteman.jar %{buildroot}%{homedir}/lib/byteman.jar
 
 %files -f .mfiles
 %{homedir}/*
@@ -134,6 +151,9 @@ ln -s %{_javadir}/byteman/byteman.jar $RPM_BUILD_ROOT%{homedir}/lib/byteman.jar
 %license docs/copyright.txt
 
 %changelog
+* Tue Nov 08 2016 Tomas Repik <trepik@redhat.com> - 3.0.6-2
+- scl conversion
+
 * Mon Jun 13 2016 Severin Gehwolf <sgehwolf@redhat.com> - 3.0.6-1
 - Update to latest upstream release.
 
