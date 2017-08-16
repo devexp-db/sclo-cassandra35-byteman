@@ -33,6 +33,7 @@ BuildRequires:	%{?scl_prefix_maven}testng
 BuildRequires:	%{?scl_prefix_java_common}java_cup
 BuildRequires:	%{?scl_prefix_java_common}junit
 BuildRequires:	%{?scl_prefix}objectweb-asm
+BuildRequires:	%{?scl_prefix}snakeyaml
 # missing dependencies in RHEL not needed in SCL package
 %{!?scl:BuildRequires:	maven-verifier-plugin
 # JBoss modules byteman plugin requires it
